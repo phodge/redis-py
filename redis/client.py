@@ -3558,9 +3558,15 @@ class PubSub(object):
         """
         Get the next message if one is available, otherwise None.
 
-        If timeout is specified, the system will wait for `timeout` seconds
+        If timeout is specified, the system will wait up to `timeout` seconds
         before returning. Timeout should be specified as a floating point
         number.
+
+        Note that some channel activity may cause get_message() to return None
+        before the full timeout period has elapsed. This can occur when an
+        ignored subscribe event is broadcast on the channel, or when a
+        channel message is intercepted by a callback previously installed using
+        .subscribe() or .psubscribe().
         """
         response = self.parse_response(block=False, timeout=timeout)
         if response:

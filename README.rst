@@ -314,13 +314,13 @@ option to a value less than 30.
 
 This option also works on any PubSub connection that is created from a
 client with ``health_check_interval`` enabled. PubSub users need to ensure
-that ``get_message()`` or ``listen()`` are called more frequently than
-``health_check_interval`` seconds. It is assumed that most workloads already
-do this.
+that ``get_message()`` or ``wait_for_message()`` or ``listen()`` are called
+more frequently than ``health_check_interval`` seconds. It is assumed that most
+workloads already do this.
 
-If your PubSub use case doesn't call ``get_message()`` or ``listen()``
-frequently, you should call ``pubsub.check_health()`` explicitly on a
-regularly basis.
+If your PubSub use case doesn't call ``get_message()``, ``wait_for_message()``
+or ``listen()`` frequently, you should call ``pubsub.check_health()``
+explicitly on a regularly basis.
 
 Parsers
 ^^^^^^^
