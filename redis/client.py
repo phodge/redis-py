@@ -3567,10 +3567,62 @@ class PubSub(object):
         ignored subscribe event is broadcast on the channel, or when a
         channel message is intercepted by a callback previously installed using
         .subscribe() or .psubscribe().
+
+        If you want to the redis client to continue blocking until the full
+        timeout period has expired, use wait_for_message() instead.
         """
         response = self.parse_response(block=False, timeout=timeout)
         if response:
             return self.handle_message(response, ignore_subscribe_messages)
+        return None
+
+    def wait_for_message(self, ignore_subscribe_messages=False, timeout=0):
+        """
+        Block until a message is available, then return it.
+
+        Timeout should be a floating point number. If no message arrives before
+        the timeout period expires, then None is returned.  If timeout is set
+        to 0 (the default) then wait_for_message() will block indefinitely.
+
+        If ignore_subscribe_messages is set to True, then subscription messages
+        will be ignored and wait_for_message() will continue waiting for
+        another message to return.
+
+        If message handlers have been installed using .subscribe() or
+        .psubscribe(), then any messages matching those handlers will be passed
+        to the handlers and wait_for_message() will continue waiting for
+        another message to return.
+        """
+        if timeout <= 0:
+            # no timeout - run forever
+            while True:
+                response = self.parse_response(block=False, timeout=0)
+                if response:
+                    message = self.handle_message(
+                        response,
+                        ignore_subscribe_messages,
+                    )
+                    if message:
+                        return message
+
+        # we store the current time in `now` to avoid calling time.time() twice
+        # before the first check of self.parse_response()
+        now = time.time()
+        stoptime = now + timeout
+
+        while now <= stoptime:
+            response = self.parse_response(block=False, timeout=stoptime - now)
+            if response:
+                message = self.handle_message(
+                    response,
+                    ignore_subscribe_messages,
+                )
+                if message:
+                    return message
+
+            now = time.time()
+
+        # if we reached this point it means our timeout has expired
         return None
 
     def ping(self, message=None):
